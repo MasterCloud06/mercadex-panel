@@ -71,7 +71,7 @@ export default function App() {
             ))}
           </nav>
           <div className="pie-menu">
-            Sesión: {sesion.usuario}
+            Sesión: {sesion.nombre ?? sesion.usuario}
             <br />
             <button
               onClick={() => {

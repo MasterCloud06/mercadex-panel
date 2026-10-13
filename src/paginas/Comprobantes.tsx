@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, dinero, fechaHora, type PagoApp } from '../api';
+import { api, dinero, fechaHora, leerSesion, type PagoApp } from '../api';
 
 type Filtro = 'pendiente' | 'aprobado' | 'rechazado' | 'todos';
 
@@ -135,7 +135,10 @@ function Detalle({ pago, alTerminar }: { pago: PagoApp; alTerminar: (mensaje: st
   const [imagen, setImagen] = useState<string | null>(null);
   const [errorImagen, setErrorImagen] = useState<string | null>(null);
   const [zoom, setZoom] = useState(false);
-  const [revisor, setRevisor] = useState(leerRevisor);
+  // Con un usuario propio, quien revisa es el de la sesión.
+  const sesion = leerSesion();
+  const revisorFijo = sesion && sesion.principal === false ? sesion.nombre ?? sesion.usuario : null;
+  const [revisor, setRevisor] = useState(() => revisorFijo ?? leerRevisor());
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [trabajando, setTrabajando] = useState(false);
@@ -248,7 +251,13 @@ function Detalle({ pago, alTerminar }: { pago: PagoApp; alTerminar: (mensaje: st
           ) : null}
           <label className="campo" style={{ marginTop: 16 }}>
             <span>Revisado por</span>
-            <input value={revisor} onChange={(e) => setRevisor(e.target.value)} placeholder="Tu nombre" />
+            <input
+              value={revisor}
+              onChange={(e) => setRevisor(e.target.value)}
+              placeholder="Tu nombre"
+              readOnly={revisorFijo !== null}
+              title={revisorFijo !== null ? 'Se registra a nombre de tu usuario.' : undefined}
+            />
           </label>
           <div className="acciones">
             <div>
