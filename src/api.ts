@@ -4,7 +4,15 @@ export const ENTORNO: 'desarrollo' | 'produccion' =
 
 const CLAVE = 'mercadex.panel.sesion';
 
-export type Sesion = { token: string; usuario: string; expira: string };
+export type Sesion = {
+  token: string;
+  usuario: string;
+  expira: string;
+  /** Nombre completo (desde Mercadex 1.6.2). */
+  nombre?: string;
+  /** Administrador configurado en Render: escribe su nombre al revisar. */
+  principal?: boolean;
+};
 
 // La sesión vive en sessionStorage: se borra al cerrar la pestaña,
 // conveniente en computadoras compartidas de la caja.
@@ -77,9 +85,33 @@ export const api = {
   blob: (ruta: string) => solicitar<Blob>('GET', ruta, undefined, true),
 };
 
+type RespuestaIngreso = {
+  token: string;
+  usuario: string;
+  expira: string;
+  nombre?: string;
+  rol?: string;
+  principal?: boolean;
+  debeCambiarContrasena?: boolean;
+};
+
 export async function ingresar(usuario: string, password: string): Promise<Sesion> {
-  const r = await api.post<{ token: string; usuario: string; expira: string }>('/api/auth/login', { usuario, password });
-  const s = { token: r.token, usuario: r.usuario, expira: r.expira };
+  const r = await api.post<RespuestaIngreso>('/api/auth/login', { usuario, password });
+
+  if (r.rol && r.rol !== 'Administrador')
+    throw new Error('El panel de caja es solo para administradores. Pide al administrador que revise tu rol.');
+
+  if (r.debeCambiarContrasena)
+    throw new Error('Tienes una contraseña temporal. Ingresa primero a Mercadex de escritorio para elegir la tuya.');
+
+  // Las versiones anteriores de la API no informan «principal»: se trata como administrador principal.
+  const s: Sesion = {
+    token: r.token,
+    usuario: r.usuario,
+    expira: r.expira,
+    nombre: r.nombre ?? r.usuario,
+    principal: r.principal ?? true,
+  };
   guardarSesion(s);
   return s;
 }
