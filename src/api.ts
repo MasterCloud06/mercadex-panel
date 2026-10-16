@@ -12,7 +12,11 @@ export type Sesion = {
   nombre?: string;
   /** Administrador configurado en Render: escribe su nombre al revisar. */
   principal?: boolean;
+  /** Administrador o Consulta (directiva). Sesiones anteriores: administrador. */
+  rol?: 'Administrador' | 'Consulta';
 };
+
+export const esAdministrador = (s: Sesion) => (s.rol ?? 'Administrador') === 'Administrador';
 
 // La sesión vive en sessionStorage: se borra al cerrar la pestaña,
 // conveniente en computadoras compartidas de la caja.
@@ -80,6 +84,8 @@ async function solicitar<T>(metodo: string, ruta: string, cuerpo?: unknown, como
 
 export const api = {
   get: <T>(ruta: string) => solicitar<T>('GET', ruta),
+  /** Descarga un archivo y lo guarda con ese nombre. */
+  descargar: async (ruta: string, nombre: string) => guardarArchivo(await solicitar<Blob>('GET', ruta, undefined, true), nombre),
   post: <T>(ruta: string, cuerpo: unknown = {}) => solicitar<T>('POST', ruta, cuerpo),
   put: <T>(ruta: string, cuerpo: unknown) => solicitar<T>('PUT', ruta, cuerpo),
   blob: (ruta: string) => solicitar<Blob>('GET', ruta, undefined, true),
@@ -98,8 +104,9 @@ type RespuestaIngreso = {
 export async function ingresar(usuario: string, password: string): Promise<Sesion> {
   const r = await api.post<RespuestaIngreso>('/api/auth/login', { usuario, password });
 
-  if (r.rol && r.rol !== 'Administrador')
-    throw new Error('El panel de caja es solo para administradores. Pide al administrador que revise tu rol.');
+  // Administrador: todo. Consulta (directiva): reportes y registro de cambios.
+  if (r.rol && r.rol !== 'Administrador' && r.rol !== 'Consulta')
+    throw new Error('Tu usuario es de caja: usa Mercadex de escritorio. El panel web es para administración y la directiva.');
 
   if (r.debeCambiarContrasena)
     throw new Error('Tienes una contraseña temporal. Ingresa primero a Mercadex de escritorio para elegir la tuya.');
@@ -111,6 +118,7 @@ export async function ingresar(usuario: string, password: string): Promise<Sesio
     expira: r.expira,
     nombre: r.nombre ?? r.usuario,
     principal: r.principal ?? true,
+    rol: r.rol === 'Consulta' ? 'Consulta' : 'Administrador',
   };
   guardarSesion(s);
   return s;
@@ -169,3 +177,48 @@ export function fechaHora(valor: string) {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(valor);
   return m ? `${Number(m[3])} ${meses[Number(m[2]) - 1]} ${m[1]}, ${m[4]}:${m[5]}` : valor;
 }
+
+// ------------------------------------------------------------ Archivos
+
+export function guardarArchivo(blob: Blob, nombre: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** CSV para Excel (separador «;», con BOM para los acentos y sin fórmulas). */
+export function descargarCsv(nombre: string, filas: (string | number | null | undefined)[][]) {
+  const celda = (v: string | number | null | undefined) => {
+    if (v === null || v === undefined) return '';
+    if (typeof v === 'number') return v.toFixed(2).replace('.', ',');
+    let t = v.replace(/"/g, '""');
+    if (/^[=+\-@]/.test(t)) t = "'" + t;
+    return `"${t}"`;
+  };
+  const texto = filas.map((f) => f.map(celda).join(';')).join('\r\n');
+  guardarArchivo(new Blob(['\ufeff' + texto], { type: 'text/csv;charset=utf-8' }), nombre);
+}
+
+/** Fecha AAAA-MM-DD de hoy (hora de la computadora, Bolivia). */
+export function hoyIso(desplazarDias = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + desplazarDias);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function primeroDelMes() {
+  return hoyIso().slice(0, 8) + '01';
+}
+
+/** 2026-10-15 → 15/10/2026 */
+export function fechaCorta(iso: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+}
+
+export const nombresMes = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
