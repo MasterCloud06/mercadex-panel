@@ -1,21 +1,28 @@
 import { useCallback, useEffect, useState } from 'react';
-import { alVencerSesion, api, API_URL, ENTORNO, guardarSesion, leerSesion, type PagoApp, type Sesion } from './api';
+import { alVencerSesion, api, API_URL, ENTORNO, esAdministrador, guardarSesion, leerSesion, type PagoApp, type Sesion } from './api';
 import Comprobantes from './paginas/Comprobantes';
 import DatosPago from './paginas/DatosPago';
 import Ingreso from './paginas/Ingreso';
+import RegistroCambios from './paginas/RegistroCambios';
+import Reportes from './paginas/Reportes';
 import Socios from './paginas/Socios';
 
-type Seccion = 'comprobantes' | 'socios' | 'datos';
+type Seccion = 'comprobantes' | 'socios' | 'datos' | 'reportes' | 'registro';
 
-const secciones: { id: Seccion; nombre: string }[] = [
-  { id: 'comprobantes', nombre: 'Comprobantes' },
-  { id: 'socios', nombre: 'Socios y acceso' },
-  { id: 'datos', nombre: 'Datos de pago' },
+// soloAdmin: la directiva (usuario de consulta) ve solo reportes y registro de cambios.
+const secciones: { id: Seccion; nombre: string; soloAdmin: boolean }[] = [
+  { id: 'comprobantes', nombre: 'Comprobantes', soloAdmin: true },
+  { id: 'socios', nombre: 'Socios y acceso', soloAdmin: true },
+  { id: 'datos', nombre: 'Datos de pago', soloAdmin: true },
+  { id: 'reportes', nombre: 'Reportes', soloAdmin: false },
+  { id: 'registro', nombre: 'Registro de cambios', soloAdmin: false },
 ];
 
 export default function App() {
   const [sesion, setSesion] = useState<Sesion | null>(() => leerSesion());
-  const [seccion, setSeccion] = useState<Seccion>('comprobantes');
+  const [seccion, setSeccion] = useState<Seccion>(() => (sesion && !esAdministrador(sesion) ? 'reportes' : 'comprobantes'));
+  const admin = sesion ? esAdministrador(sesion) : false;
+  const visibles = secciones.filter((s) => admin || !s.soloAdmin);
   const [pendientes, setPendientes] = useState<number | null>(null);
 
   useEffect(() => alVencerSesion(() => setSesion(null)), []);
@@ -30,11 +37,11 @@ export default function App() {
 
   // El contador se actualiza solo cada minuto.
   useEffect(() => {
-    if (!sesion) return;
+    if (!sesion || !admin) return;
     void contarPendientes();
     const t = setInterval(() => void contarPendientes(), 60_000);
     return () => clearInterval(t);
-  }, [sesion, contarPendientes]);
+  }, [sesion, admin, contarPendientes]);
 
   const franja = ENTORNO === 'desarrollo' ? <div className="franja-dev">Desarrollo · {API_URL.replace(/^https?:\/\//, '')}</div> : null;
 
@@ -42,7 +49,12 @@ export default function App() {
     return (
       <>
         {franja}
-        <Ingreso alIngresar={setSesion} />
+        <Ingreso
+          alIngresar={(s) => {
+            setSesion(s);
+            setSeccion(esAdministrador(s) ? 'comprobantes' : 'reportes');
+          }}
+        />
       </>
     );
 
@@ -55,11 +67,11 @@ export default function App() {
             <div className="sello">M</div>
             <div>
               <div className="marca-nombre">Mercadex</div>
-              <div className="marca-sub">Caja · App de socios</div>
+              <div className="marca-sub">{admin ? 'Caja · App de socios' : 'Directiva · Consulta'}</div>
             </div>
           </div>
           <nav aria-label="Secciones">
-            {secciones.map((s) => (
+            {visibles.map((s) => (
               <button
                 key={s.id}
                 className={`opcion${seccion === s.id ? ' activa' : ''}`}
@@ -84,9 +96,11 @@ export default function App() {
         </aside>
 
         <main className="contenido">
-          {seccion === 'comprobantes' ? <Comprobantes alCambiar={contarPendientes} /> : null}
-          {seccion === 'socios' ? <Socios /> : null}
-          {seccion === 'datos' ? <DatosPago /> : null}
+          {seccion === 'comprobantes' && admin ? <Comprobantes alCambiar={contarPendientes} /> : null}
+          {seccion === 'socios' && admin ? <Socios /> : null}
+          {seccion === 'datos' && admin ? <DatosPago /> : null}
+          {seccion === 'reportes' ? <Reportes /> : null}
+          {seccion === 'registro' ? <RegistroCambios /> : null}
         </main>
       </div>
     </>

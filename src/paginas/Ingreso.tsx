@@ -25,9 +25,9 @@ export default function Ingreso({ alIngresar }: { alIngresar: (s: Sesion) => voi
     <div className="ingreso">
       <form className="tarjeta" onSubmit={enviar}>
         <div className="sello">M</div>
-        <h1>Caja · App de socios</h1>
+        <h1>Mercadex · Panel web</h1>
         <p className="bajada" style={{ marginBottom: 20 }}>
-          Revisa los comprobantes que envían los socios y da acceso a la app.
+          Revisa los comprobantes que envían los socios y da acceso a la app. La directiva entra con su usuario de consulta para ver los reportes.
         </p>
         {error ? <div className="aviso error" role="alert">{error}</div> : null}
         <label className="campo">
