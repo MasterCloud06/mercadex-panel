@@ -62,7 +62,7 @@ export default function Ingreso({ alIngresar }: { alIngresar: (s: Sesion) => voi
         <button className="boton ancho" disabled={enviando}>
           {enviando ? 'Ingresando…' : 'Ingresar'}
         </button>
-        <p className="ayuda" style={{ marginTop: 14 }}>Usa el usuario administrador de Mercadex.</p>
+        <p className="ayuda" style={{ marginTop: 14 }}>Usa tu usuario de Mercadex: administrador, o de consulta para la directiva.</p>
       </form>
     </div>
   );
