@@ -162,6 +162,59 @@ export type ConfiguracionPago = {
   qrBase64: string | null;
 };
 
+export type EstadoDeuda = 'Pendiente' | 'Pagada' | 'Anulada';
+
+export type AnulacionDeDeuda = {
+  anulacionId: string;
+  tipo: 'Individual' | 'Masiva';
+  motivo: string;
+  responsable: string;
+  fecha: string;
+  deudasEnLaAnulacion: number;
+};
+
+export type DeudaPanel = {
+  id: string;
+  caseta: string;
+  bloque: string | null;
+  concepto: string;
+  anio: number | null;
+  mes: number | null;
+  periodo: string;
+  monto: number;
+  moneda: string;
+  emision: string;
+  vencimiento: string | null;
+  estado: EstadoDeuda;
+  anulable: boolean;
+  motivoNoAnulable: string | null;
+  anulacion: AnulacionDeDeuda | null;
+};
+
+export type TotalMoneda = { moneda: string; cantidad: number; total: number };
+
+export type VistaPreviaAnulacion = {
+  tipo: 'Individual' | 'Masiva';
+  filtros: string;
+  cantidad: number;
+  totales: TotalMoneda[];
+  huella: string;
+  noAnulables: number;
+  deudas: { id: string; caseta: string; concepto: string; periodo: string; monto: number; moneda: string }[];
+  bloqueadas: { id: string; caseta: string; concepto: string; periodo: string; monto: number; moneda: string; estado: EstadoDeuda; motivo: string }[];
+};
+
+export type AnulacionRegistrada = {
+  id: string;
+  tipo: 'Individual' | 'Masiva';
+  motivo: string;
+  responsable: string;
+  filtros: string | null;
+  fecha: string;
+  cantidad: number;
+  totales: TotalMoneda[];
+};
+
 // ------------------------------------------------------------ Formato
 
 const numero = new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
