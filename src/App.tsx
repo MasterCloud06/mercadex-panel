@@ -2,17 +2,19 @@ import { useCallback, useEffect, useState } from 'react';
 import { alVencerSesion, api, API_URL, ENTORNO, esAdministrador, guardarSesion, leerSesion, type PagoApp, type Sesion } from './api';
 import Comprobantes from './paginas/Comprobantes';
 import DatosPago from './paginas/DatosPago';
+import Deudas from './paginas/Deudas';
 import Ingreso from './paginas/Ingreso';
 import RegistroCambios from './paginas/RegistroCambios';
 import Reportes from './paginas/Reportes';
 import Socios from './paginas/Socios';
 
-type Seccion = 'comprobantes' | 'socios' | 'datos' | 'reportes' | 'registro';
+type Seccion = 'comprobantes' | 'socios' | 'deudas' | 'datos' | 'reportes' | 'registro';
 
 // soloAdmin: la directiva (usuario de consulta) ve solo reportes y registro de cambios.
 const secciones: { id: Seccion; nombre: string; soloAdmin: boolean }[] = [
   { id: 'comprobantes', nombre: 'Comprobantes', soloAdmin: true },
   { id: 'socios', nombre: 'Socios y acceso', soloAdmin: true },
+  { id: 'deudas', nombre: 'Deudas', soloAdmin: true },
   { id: 'datos', nombre: 'Datos de pago', soloAdmin: true },
   { id: 'reportes', nombre: 'Reportes', soloAdmin: false },
   { id: 'registro', nombre: 'Registro de cambios', soloAdmin: false },
@@ -98,6 +100,7 @@ export default function App() {
         <main className="contenido">
           {seccion === 'comprobantes' && admin ? <Comprobantes alCambiar={contarPendientes} /> : null}
           {seccion === 'socios' && admin ? <Socios /> : null}
+          {seccion === 'deudas' && admin ? <Deudas /> : null}
           {seccion === 'datos' && admin ? <DatosPago /> : null}
           {seccion === 'reportes' ? <Reportes /> : null}
           {seccion === 'registro' ? <RegistroCambios /> : null}

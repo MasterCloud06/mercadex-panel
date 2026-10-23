@@ -44,7 +44,7 @@ button, input, textarea, select { font: inherit; }
   padding: 3px 8px;
 }
 
-.app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+.app { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
 .app.con-franja { min-height: calc(100vh - 24px); }
 
 .menu { background: var(--azul); color: #b9ccdd; display: flex; flex-direction: column; }
@@ -199,7 +199,7 @@ table.tabla { width: 100%; border-collapse: collapse; background: var(--blanco);
 .ingreso h1 { font-size: 24px; margin: 16px 0 2px; }
 
 @media (max-width: 900px) {
-  .app { grid-template-columns: 1fr; }
+  .app { grid-template-columns: minmax(0, 1fr); }
   .menu nav { display: flex; overflow-x: auto; }
   .opcion { width: auto; white-space: nowrap; }
   .pie-menu { display: none; }
@@ -262,3 +262,40 @@ h2 { font-size: 17px; color: var(--tinta); margin: 0 0 4px; }
 }
 .pestanas { overflow-x: auto; }
 .pestana { white-space: nowrap; }
+
+/* ---------- Deudas (anulación) ---------- */
+
+.filtros .campo select { min-width: 130px; }
+.resumen-deudas { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; margin: 4px 0 12px; font-variant-numeric: tabular-nums; }
+.barra-anular {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+  background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); padding: 10px 14px; margin-bottom: 12px;
+}
+.barra-anular-botones { display: flex; flex-wrap: wrap; gap: 8px; }
+.marcar-todas, .confirmacion { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; cursor: pointer; }
+.marcar-todas input, .confirmacion input, .tabla.deudas input[type='checkbox'] { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--azul-medio); }
+.tabla.deudas td { vertical-align: top; }
+.tabla.deudas .monto-deuda { font-weight: 600; }
+.tabla.deudas tr.anulada .monto-deuda { color: var(--tenue); text-decoration: line-through; }
+.nota-deuda { font-size: 13px; color: var(--suave); max-width: 46ch; }
+.boton.rojo { background: var(--rojo); border-color: var(--rojo); }
+.enlace { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font-weight: 600; }
+
+.buscar-socio { position: relative; }
+.buscar-socio input { min-height: 40px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--borde-campo); min-width: 200px; }
+.sugerencias {
+  position: absolute; z-index: 4; top: 100%; left: 0; width: max(100%, 340px); margin-top: 4px;
+  background: var(--blanco); border: 1px solid var(--borde-campo); border-radius: 10px; padding: 6px;
+  box-shadow: 0 8px 24px rgba(18, 48, 77, 0.14);
+}
+.sugerencias button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 7px 8px; border-radius: 6px; cursor: pointer; color: var(--texto); }
+.sugerencias button:hover { background: #eef3f9; }
+.socio-elegido { display: flex; align-items: center; gap: 8px; min-height: 40px; font-weight: 600; color: var(--tinta); }
+.socio-elegido .boton { min-height: 32px; padding: 0 10px; }
+
+.ventana.ancha { width: min(680px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; }
+.previa-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0 6px; padding: 14px 16px; border-radius: 10px; background: var(--superficie); }
+.lista-previa { max-height: 240px; overflow-y: auto; border: 1px solid var(--borde); border-radius: 10px; padding: 0 8px; }
+.lista-previa .tabla.simple { margin-top: 0; }
+.lista-bloqueadas { margin: 6px 0 0; padding-left: 18px; font-size: 13.5px; }
+.botones-ventana { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
