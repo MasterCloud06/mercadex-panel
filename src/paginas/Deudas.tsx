@@ -13,7 +13,6 @@ import {
 } from '../api';
 
 const RUTA = '/api/panel/obligaciones-anulaciones';
-const MOTIVO_MINIMO = 10;
 
 type Catalogos = { conceptos: { id: string; nombre: string; activo: boolean }[]; bloques: string[] };
 
@@ -73,7 +72,7 @@ export default function Deudas() {
           <h1>Deudas</h1>
           <p className="bajada">
             Anula una deuda o varias a la vez. La deuda no se borra: queda como «Anulada», deja de sumar en los saldos y
-            guarda quién la anuló, cuándo y por qué. Solo se anulan deudas pendientes sin cobros ni comprobantes.
+            guarda quién la anuló y cuándo. Solo se anulan deudas pendientes sin cobros ni comprobantes.
           </p>
         </div>
       </div>
@@ -442,7 +441,6 @@ function ConfirmarAnulacion({ pedido, alCerrar, alTerminar }: { pedido: Pedido; 
   const [previa, setPrevia] = useState<VistaPreviaAnulacion | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [motivo, setMotivo] = useState('');
-  const [confirmo, setConfirmo] = useState(false);
   const [trabajando, setTrabajando] = useState(false);
   // Una clave por confirmación: si el envío se repite (doble clic), la API no anula dos veces.
   const [clave] = useState(() => crypto.randomUUID());
@@ -450,7 +448,6 @@ function ConfirmarAnulacion({ pedido, alCerrar, alTerminar }: { pedido: Pedido; 
   const cargar = useCallback(async () => {
     setError(null);
     setPrevia(null);
-    setConfirmo(false);
     try {
       setPrevia(await api.post<VistaPreviaAnulacion>(`${RUTA}/vista-previa`, pedido));
     } catch (e) {
@@ -462,8 +459,7 @@ function ConfirmarAnulacion({ pedido, alCerrar, alTerminar }: { pedido: Pedido; 
     void cargar();
   }, [cargar]);
 
-  const motivoValido = motivo.trim().length >= MOTIVO_MINIMO;
-  const puede = previa !== null && previa.cantidad > 0 && motivoValido && confirmo && !trabajando;
+  const puede = previa !== null && previa.cantidad > 0 && !trabajando;
 
   const anular = async () => {
     if (!previa || !puede) return;
@@ -489,7 +485,7 @@ function ConfirmarAnulacion({ pedido, alCerrar, alTerminar }: { pedido: Pedido; 
     <div className="ventana-fondo" role="dialog" aria-modal="true" aria-labelledby="titulo-anular">
       <div className="ventana ancha">
         <h2 id="titulo-anular">{previa?.tipo === 'Individual' ? 'Anular deuda' : 'Anular deudas'}</h2>
-        <p className="bajada">Revisa qué se anulará. Nada cambia hasta que pulses el botón rojo.</p>
+        <p className="bajada">Revisa qué se anulará. Nada cambia hasta que pulses el botón rojo. Queda en el historial a tu nombre.</p>
 
         {error ? (
           <div className="aviso error" style={{ marginTop: 12 }}>
@@ -559,22 +555,14 @@ function ConfirmarAnulacion({ pedido, alCerrar, alTerminar }: { pedido: Pedido; 
             ) : (
               <>
                 <label className="campo" style={{ marginTop: 14 }}>
-                  <span>Motivo de la anulación (obligatorio)</span>
+                  <span>Motivo (opcional)</span>
                   <textarea
                     id="motivo-anulacion"
                     value={motivo}
                     maxLength={500}
                     onChange={(e) => setMotivo(e.target.value)}
-                    placeholder="Ej.: la caseta estuvo cerrada por remodelación del bloque en octubre"
+                    placeholder="Ej.: caseta cerrada en octubre"
                   />
-                  <span className="ayuda" style={{ fontWeight: 400 }}>
-                    {motivoValido ? 'Queda en el historial con tu nombre.' : `Mínimo ${MOTIVO_MINIMO} caracteres.`}
-                  </span>
-                </label>
-                <label className="confirmacion">
-                  <input id="confirmo-anulacion" type="checkbox" checked={confirmo} onChange={(e) => setConfirmo(e.target.checked)} />
-                  Revisé la lista. Entiendo que {previa.cantidad === 1 ? 'esta deuda dejará' : `estas ${previa.cantidad} deudas dejarán`} de
-                  cobrarse y no se volverán a generar.
                 </label>
               </>
             )}
